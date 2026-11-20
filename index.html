@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rubel AI Cartoon</title>
+<style>
+:root{--bg:#090d1b;--panel:#121a30;--line:#263452;--text:#f5f7ff;--muted:#aab6d3;--accent:#8b5cf6;--cyan:#22d3ee}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#24205a 0,transparent 42%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif;min-height:100vh}
+.wrap{max-width:900px;margin:auto;padding:26px 16px 50px}.top{display:flex;align-items:center;gap:12px;margin-bottom:28px}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,var(--accent),var(--cyan));display:grid;place-items:center;font-size:25px}.brand{font-size:22px;font-weight:800}.tag{color:var(--muted);font-size:13px}
+.hero{text-align:center;padding:25px 8px 28px}.hero h1{font-size:clamp(30px,6vw,48px);line-height:1.15;margin:0 0 12px}.grad{background:linear-gradient(90deg,#c4b5fd,#67e8f9);background-clip:text;color:transparent}.hero p{color:var(--muted);margin:0}
+.panel{background:rgba(18,26,48,.94);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 20px 60px #0005}
+label{display:block;font-weight:700;margin:0 0 9px}textarea,select{width:100%;background:#0b1225;color:var(--text);border:1px solid #344363;border-radius:13px;padding:14px;font:inherit;outline:none}textarea{min-height:145px;resize:vertical}textarea:focus,select:focus{border-color:var(--cyan)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:17px}.field{min-width:0}.hint{font-size:12px;color:var(--muted);margin-top:7px}
+button{width:100%;margin-top:20px;padding:15px;border:0;border-radius:14px;background:linear-gradient(90deg,var(--accent),#2563eb);color:white;font:inherit;font-weight:800;font-size:16px;cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+.status{margin-top:15px;color:var(--muted);text-align:center;min-height:24px}.result{margin-top:20px;display:none}.result video{width:100%;border-radius:14px;background:#000}.download{display:inline-block;margin-top:12px;color:#67e8f9}
+.note{font-size:12px;color:var(--muted);line-height:1.6;margin:16px 2px 0}.foot{text-align:center;color:#7785a5;font-size:12px;margin-top:24px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.panel{padding:17px}.wrap{padding-top:18px}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="top"><div class="logo">🎬</div><div><div class="brand">Rubel AI Cartoon</div><div class="tag">তোমার গল্প, তোমার কার্টুন</div></div></header>
+<section class="hero"><h1>গল্প লিখো, <span class="grad">কার্টুন ভিডিও</span> বানাও</h1><p>তোমার কল্পনাকে ছোট্ট অ্যানিমেটেড ভিডিওতে রূপ দাও।</p></section>
+<section class="panel">
+<label for="story">তোমার গল্প লিখো</label>
+<textarea id="story" maxlength="1200" placeholder="যেমন: এক ছোট্ট খরগোশ বনের বন্ধুদের সাহায্য করতে বের হলো..."></textarea>
+<div class="grid">
+<div class="field"><label for="style">কার্টুনের ধরন</label><select id="style"><option>3D cartoon</option><option>2D cartoon</option><option>Anime cartoon</option><option>Clay animation</option></select></div>
+<div class="field"><label for="language">ভাষা</label><select id="language"><option>Bangla</option><option>English</option></select></div>
+</div>
+<button id="go" onclick="generate()">✨ Generate Video</button>
+<div class="status" id="status" role="status"></div>
+<div class="result" id="result"><video id="video" controls playsinline></video><a class="download" id="download" download="rubel-ai-cartoon.mp4">ভিডিও ডাউনলোড করুন ↓</a></div>
+<p class="note">নোট: ভিডিও তৈরি করতে সার্ভারে AI ভিডিও API সংযুক্ত থাকতে হবে। API-র ফ্রি ক্রেডিট শেষ হলে বা সার্ভিস ব্যস্ত থাকলে ভিডিও তৈরি নাও হতে পারে।</p>
+</section><div class="foot">© Rubel AI Cartoon · Made for creative stories</div>
+</main>
+<script>
+let currentUrl=null;
+async function generate(){
+ const story=document.getElementById('story').value.trim();
+ const btn=document.getElementById('go'), status=document.getElementById('status'), result=document.getElementById('result');
+ if(story.length<8){status.textContent='দয়া করে কমপক্ষে ৮ অক্ষরের গল্প লিখুন।';return;}
+ btn.disabled=true;btn.textContent='⏳ ভিডিও তৈরি হচ্ছে...';status.textContent='AI ভিডিও তৈরি করছে। কিছু সময় লাগতে পারে...';result.style.display='none';
+ try{
+  const res=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({story,style:document.getElementById('style').value,language:document.getElementById('language').value})});
+  const type=res.headers.get('content-type')||'';
+  if(!res.ok){let msg='ভিডিও তৈরি করা যায়নি।';if(type.includes('application/json')){const d=await res.json();msg=d.error||msg;}throw new Error(msg);}
+  const blob=await res.blob();if(currentUrl)URL.revokeObjectURL(currentUrl);currentUrl=URL.createObjectURL(blob);
+  document.getElementById('video').src=currentUrl;document.getElementById('download').href=currentUrl;result.style.display='block';status.textContent='ভিডিও তৈরি হয়েছে! 🎉';
+ }catch(e){status.textContent=e.message;}
+ finally{btn.disabled=false;btn.textContent='✨ Generate Video';}
+}
+</script></body></html>
